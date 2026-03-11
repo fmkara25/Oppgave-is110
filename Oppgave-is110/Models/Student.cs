@@ -37,6 +37,15 @@ namespace UniversitySystem.Models
             _enrolledCourses.Add(courseCode);
         }
 
+        public void RemoveCourse(string courseCode)
+        {
+            if (string.IsNullOrWhiteSpace(courseCode))
+                throw new ArgumentException("Course code cannot be empty.");
+
+            courseCode = courseCode.Trim().ToUpperInvariant();
+
+            _enrolledCourses.Remove(courseCode);
+        }
         public override string ToString()
         {
             return $"Student {StudentId} - {base.ToString()}";

@@ -99,5 +99,43 @@ namespace UniversitySystem.Services
             activeLoan.CloseLoan(DateTime.Now);
             book.IncreaseCopies();
         }
+
+        public List<Loan> GetActiveLoans()
+        {
+            return _loans
+                .Where(l => l.IsActive())
+                .ToList();
+        }
+
+        public List<Loan> GetLoanHistory()
+        {
+            return _loans
+                .Where(l => !l.IsActive())
+                .ToList();
+        }
+
+        public List<Loan> GetLoansByUser(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return new List<Loan>();
+
+            email = email.Trim();
+
+            return _loans
+                .Where(l => l.User.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        public List<Loan> GetLoansByBook(string bookId)
+        {
+            if (string.IsNullOrWhiteSpace(bookId))
+                return new List<Loan>();
+
+            bookId = bookId.Trim();
+
+            return _loans
+                .Where(l => l.Book.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
     }
 }

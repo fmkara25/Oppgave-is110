@@ -56,5 +56,14 @@ namespace UniversitySystem.Services
 
             course.EnrollStudent(student);
         }
+
+        public void UnenrollStudentFromCourse(string courseCode, string studentId)
+        {
+            Course? course = FindCourse(courseCode);
+            if (course == null)
+                throw new InvalidOperationException("Course not found.");
+
+            course.RemoveStudent(studentId);
+        }
     }
 }

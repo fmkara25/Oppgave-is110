@@ -85,6 +85,21 @@ namespace UniversitySystem.Models
             student.EnrollToCourse(Code);
         }
 
+        public void RemoveStudent(string studentId)
+        {
+            if (string.IsNullOrWhiteSpace(studentId))
+                throw new ArgumentException("Student id cannot be empty.");
+
+            Student? student = _enrolledStudents.FirstOrDefault(s =>
+                s.StudentId.Equals(studentId.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (student == null)
+                throw new InvalidOperationException("Student is not enrolled in this course.");
+
+            _enrolledStudents.Remove(student);
+            student.RemoveCourse(Code);
+        }
+
         public override string ToString()
         {
             return $"{Code} - {Name} ({Credits} credits) [{_enrolledStudents.Count}/{MaxCapacity}]";

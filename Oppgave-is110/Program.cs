@@ -13,7 +13,6 @@ namespace UniversitySystem
             CourseService courseService = new CourseService();
             LibraryService libraryService = new LibraryService();
 
-            // In-memory users (RAM)
             List<Student> students = new List<Student>();
             List<Staff> staffMembers = new List<Staff>();
 
@@ -35,7 +34,7 @@ namespace UniversitySystem
                             break;
 
                         case 2:
-                            EnrollStudentToCourseFlow(courseService, students);
+                            CourseEnrollmentMenuFlow(courseService, students);
                             break;
 
                         case 3:
@@ -47,7 +46,7 @@ namespace UniversitySystem
                             break;
 
                         case 5:
-                            SearchBookFlow(libraryService);
+                            BookMenuFlow(libraryService);
                             break;
 
                         case 6:
@@ -112,7 +111,7 @@ namespace UniversitySystem
             }
         }
 
-        // -------- FLOWS --------
+        // -------- MAIN FLOWS --------
 
         static void CreateCourseFlow(CourseService courseService)
         {
@@ -136,6 +135,36 @@ namespace UniversitySystem
             Pause();
         }
 
+        static void CourseEnrollmentMenuFlow(CourseService courseService, List<Student> students)
+        {
+            Console.WriteLine("--- Course Enrollment Menu ---");
+            Console.WriteLine("[1] Enroll student");
+            Console.WriteLine("[2] Unenroll student");
+            Console.WriteLine("[0] Back");
+
+            int choice = ReadInt("Select an option: ");
+            Console.WriteLine();
+
+            switch (choice)
+            {
+                case 1:
+                    EnrollStudentToCourseFlow(courseService, students);
+                    break;
+
+                case 2:
+                    UnenrollStudentFromCourseFlow(courseService, students);
+                    break;
+
+                case 0:
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    Pause();
+                    break;
+            }
+        }
+
         static void SearchCourseFlow(CourseService courseService)
         {
             Console.WriteLine("--- Search Course ---");
@@ -155,6 +184,74 @@ namespace UniversitySystem
             Console.WriteLine($"Found {results.Count} course(s):");
             foreach (Course c in results)
                 Console.WriteLine(c);
+
+            Pause();
+        }
+
+        static void BookMenuFlow(LibraryService libraryService)
+        {
+            Console.WriteLine("--- Book Menu ---");
+            Console.WriteLine("[1] Search books");
+            Console.WriteLine("[2] Show active loans");
+            Console.WriteLine("[3] Show loan history");
+            Console.WriteLine("[0] Back");
+
+            int choice = ReadInt("Select an option: ");
+            Console.WriteLine();
+
+            switch (choice)
+            {
+                case 1:
+                    SearchBookFlow(libraryService);
+                    break;
+
+                case 2:
+                    ShowActiveLoansFlow(libraryService);
+                    break;
+
+                case 3:
+                    ShowLoanHistoryFlow(libraryService);
+                    break;
+
+                case 0:
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    Pause();
+                    break;
+            }
+        }
+
+        static void PrintCoursesAndParticipantsFlow(CourseService courseService)
+        {
+            Console.WriteLine("--- Courses and Participants ---");
+
+            if (courseService.Courses.Count == 0)
+            {
+                Console.WriteLine("No courses created.");
+                Pause();
+                return;
+            }
+
+            Console.WriteLine();
+            foreach (Course course in courseService.Courses)
+            {
+                Console.WriteLine(course);
+
+                if (course.EnrolledStudents.Count == 0)
+                {
+                    Console.WriteLine("  Participants: (none)");
+                }
+                else
+                {
+                    Console.WriteLine("  Participants:");
+                    foreach (Student s in course.EnrolledStudents)
+                        Console.WriteLine($"   - {s.StudentId}: {s.Name} ({s.Email})");
+                }
+
+                Console.WriteLine();
+            }
 
             Pause();
         }
@@ -208,35 +305,58 @@ namespace UniversitySystem
             Pause();
         }
 
-        static void PrintCoursesAndParticipantsFlow(CourseService courseService)
+        static void UnenrollStudentFromCourseFlow(CourseService courseService, List<Student> students)
         {
-            Console.WriteLine("--- Courses and Participants ---");
+            Console.WriteLine("--- Unenroll Student From Course ---");
 
-            if (courseService.Courses.Count == 0)
+            if (students.Count == 0)
             {
-                Console.WriteLine("No courses created.");
+                Console.WriteLine("No students available.");
+                Pause();
+                return;
+            }
+
+            Console.Write("Course code: ");
+            string courseCode = Console.ReadLine() ?? "";
+
+            Course? course = courseService.FindCourse(courseCode);
+            if (course == null)
+            {
+                Console.WriteLine("Course not found.");
+                Pause();
+                return;
+            }
+
+            if (course.EnrolledStudents.Count == 0)
+            {
+                Console.WriteLine("No students are enrolled in this course.");
                 Pause();
                 return;
             }
 
             Console.WriteLine();
-            foreach (Course course in courseService.Courses)
+            Console.WriteLine("Enrolled students:");
+            foreach (Student s in course.EnrolledStudents)
+                Console.WriteLine($"- {s.StudentId}: {s.Name} ({s.Email})");
+
+            Console.Write("Student id: ");
+            string studentId = Console.ReadLine() ?? "";
+
+            Student? student = students.FirstOrDefault(s =>
+                s.StudentId.Equals(studentId.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (student == null)
             {
-                Console.WriteLine(course);
-
-                if (course.EnrolledStudents.Count == 0)
-                {
-                    Console.WriteLine("  Participants: (none)");
-                }
-                else
-                {
-                    Console.WriteLine("  Participants:");
-                    foreach (Student s in course.EnrolledStudents)
-                        Console.WriteLine($"   - {s.StudentId}: {s.Name} ({s.Email})");
-                }
-
-                Console.WriteLine();
+                Console.WriteLine("Student not found.");
+                Pause();
+                return;
             }
+
+            courseService.UnenrollStudentFromCourse(course.Code, student.StudentId);
+
+            Console.WriteLine();
+            Console.WriteLine("Unenrollment completed.");
+            Console.WriteLine($"{student.Name} removed from {course.Code}.");
 
             Pause();
         }
@@ -285,6 +405,46 @@ namespace UniversitySystem
             Console.WriteLine($"Found {results.Count} book(s):");
             foreach (Book b in results)
                 Console.WriteLine(b);
+
+            Pause();
+        }
+
+        static void ShowActiveLoansFlow(LibraryService libraryService)
+        {
+            Console.WriteLine("--- Active Loans ---");
+
+            List<Loan> activeLoans = libraryService.GetActiveLoans();
+
+            Console.WriteLine();
+            if (activeLoans.Count == 0)
+            {
+                Console.WriteLine("No active loans found.");
+                Pause();
+                return;
+            }
+
+            foreach (Loan loan in activeLoans)
+                Console.WriteLine(loan);
+
+            Pause();
+        }
+
+        static void ShowLoanHistoryFlow(LibraryService libraryService)
+        {
+            Console.WriteLine("--- Loan History ---");
+
+            List<Loan> loanHistory = libraryService.GetLoanHistory();
+
+            Console.WriteLine();
+            if (loanHistory.Count == 0)
+            {
+                Console.WriteLine("No returned loans found.");
+                Pause();
+                return;
+            }
+
+            foreach (Loan loan in loanHistory)
+                Console.WriteLine(loan);
 
             Pause();
         }
@@ -427,7 +587,6 @@ namespace UniversitySystem
 
         static void SeedUsers(List<Student> students, List<Staff> staffMembers)
         {
-            // Students (includes an ExchangeStudent)
             students.Add(new Student("S1001", "Alice Johnson", "alice@uni.no"));
             students.Add(new Student("S1002", "Bob Smith", "bob@uni.no"));
 
@@ -443,7 +602,6 @@ namespace UniversitySystem
                 "Spain",
                 period));
 
-            // Staff
             staffMembers.Add(new Staff("T3001", "Dr. Emma Reed", "emma@uni.no", "Lecturer", "Computer Science"));
         }
     }
